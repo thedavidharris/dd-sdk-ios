@@ -37,10 +37,35 @@
                                     <action selector="didTapButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="ZEd-DJ-Xl3"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="40A-s0-4ji">
+                                <rect key="frame" x="112" y="480" width="190" height="44"/>
+                                <color key="backgroundColor" red="0.38823529410000002" green="0.17254901959999999" blue="0.65098039220000004" alpha="1" colorSpace="calibratedRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="190" id="Avg-fa-ZTP"/>
+                                    <constraint firstAttribute="height" constant="44" id="TA8-hf-VSV"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" style="UICTFontTextStyleBody"/>
+                                <state key="normal" title="Crash">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <color key="titleShadowColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                </state>
+                                <userDefinedRuntimeAttributes>
+                                    <userDefinedRuntimeAttribute type="boolean" keyPath="layer.masksToBounds" value="YES"/>
+                                    <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                        <integer key="value" value="7"/>
+                                    </userDefinedRuntimeAttribute>
+                                </userDefinedRuntimeAttributes>
+                                <connections>
+                                    <action selector="didTapButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="kFH-5L-yEh"/>
+                                    <action selector="didTapCrash:" destination="BYZ-38-t0r" eventType="touchUpInside" id="ZsV-XM-uhA"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
                         <constraints>
+                            <constraint firstItem="40A-s0-4ji" firstAttribute="top" secondItem="IbL-VN-akh" secondAttribute="bottom" constant="10" id="Igw-SV-kgp"/>
                             <constraint firstItem="IbL-VN-akh" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="NHj-Nk-X5e"/>
+                            <constraint firstItem="40A-s0-4ji" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="hzX-Ie-zKg"/>
                             <constraint firstItem="IbL-VN-akh" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="t3Z-dQ-hhs"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>

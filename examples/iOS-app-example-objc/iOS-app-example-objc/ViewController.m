@@ -6,6 +6,7 @@
 
 #import "ViewController.h"
 @import DatadogObjc;
+#import <DatadogCrashes/DDDatadogCrashes.h>
 
 @interface ViewController ()
 
@@ -22,6 +23,8 @@
     [loggerBuilder setWithServiceName: @"ios-sdk-example-app"];
     [loggerBuilder sendLogsToDatadog: YES];
     [loggerBuilder printLogsToConsole: YES];
+
+    [DDDatadogCrashes enable];
 
     self.logger = [loggerBuilder build];
 }
@@ -48,6 +51,16 @@
             }
         },
     }];
+}
+
+- (IBAction)didTapCrash:(id)sender {
+    NSMutableArray *integers = [NSMutableArray array];
+
+    for (NSInteger i = 0; i < 40; i++) {
+        [integers addObject:[NSNumber numberWithInteger:i]];
+    }
+
+    NSLog(@"The 41st integer is: %@", [integers objectAtIndex: 41]);
 }
 
 @end
