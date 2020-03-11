@@ -6,6 +6,7 @@
 
 import UIKit
 import Datadog
+import DatadogCrashes
 
 fileprivate(set) var logger: Logger!
 
@@ -22,6 +23,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 .builderUsing(clientToken: config.clientToken) // use your own client token obtained on Datadog website)
                 .build()
         )
+
+        // Enable crash reporting
+        DDDatadogCrashes.enable()
 
         // Set user information
         Datadog.setUserInfo(id: "abcd-1234", name: "foo", email: "foo@example.com")

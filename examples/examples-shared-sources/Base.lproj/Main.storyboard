@@ -10,7 +10,7 @@
         <!--Send Message View Controller-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController id="BYZ-38-t0r" customClass="SendMessageViewController" customModule="iOS_app_example_spm" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController id="BYZ-38-t0r" customClass="SendMessageViewController" customModule="iOS_app_example_cocoapods" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -127,11 +127,11 @@
                                             <constraint firstAttribute="height" constant="15" id="ims-n9-2bf"/>
                                         </constraints>
                                     </view>
-                                    <stackView opaque="NO" contentMode="scaleToFill" spacing="5" translatesAutoresizingMaskIntoConstraints="NO" id="PLk-ao-bzx">
+                                    <stackView opaque="NO" contentMode="scaleToFill" distribution="fillEqually" spacing="5" translatesAutoresizingMaskIntoConstraints="NO" id="PLk-ao-bzx">
                                         <rect key="frame" x="0.0" y="212.5" width="384" height="44"/>
                                         <subviews>
                                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="gtC-h0-4xC">
-                                                <rect key="frame" x="0.0" y="0.0" width="189.5" height="44"/>
+                                                <rect key="frame" x="0.0" y="0.0" width="124.5" height="44"/>
                                                 <color key="backgroundColor" red="0.38823529411764707" green="0.17254901960784313" blue="0.65098039215686276" alpha="1" colorSpace="calibratedRGB"/>
                                                 <fontDescription key="fontDescription" style="UICTFontTextStyleBody"/>
                                                 <state key="normal" title="Send once">
@@ -149,7 +149,7 @@
                                                 </connections>
                                             </button>
                                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="u78-T2-8Dx">
-                                                <rect key="frame" x="194.5" y="0.0" width="189.5" height="44"/>
+                                                <rect key="frame" x="129.5" y="0.0" width="125" height="44"/>
                                                 <color key="backgroundColor" red="0.38823529410000002" green="0.17254901959999999" blue="0.65098039220000004" alpha="1" colorSpace="calibratedRGB"/>
                                                 <fontDescription key="fontDescription" style="UICTFontTextStyleBody"/>
                                                 <state key="normal" title="Send 10x">
@@ -164,6 +164,25 @@
                                                 </userDefinedRuntimeAttributes>
                                                 <connections>
                                                     <action selector="didTapSend10Logs:" destination="BYZ-38-t0r" eventType="touchUpInside" id="fjr-5T-r8y"/>
+                                                </connections>
+                                            </button>
+                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Sja-1v-oL2">
+                                                <rect key="frame" x="259.5" y="0.0" width="124.5" height="44"/>
+                                                <color key="backgroundColor" systemColor="systemPinkColor" red="1" green="0.1764705882" blue="0.33333333329999998" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                                <fontDescription key="fontDescription" style="UICTFontTextStyleBody"/>
+                                                <state key="normal" title="Crash!">
+                                                    <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                                    <color key="titleShadowColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                                </state>
+                                                <userDefinedRuntimeAttributes>
+                                                    <userDefinedRuntimeAttribute type="boolean" keyPath="layer.masksToBounds" value="YES"/>
+                                                    <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                                        <integer key="value" value="7"/>
+                                                    </userDefinedRuntimeAttribute>
+                                                </userDefinedRuntimeAttributes>
+                                                <connections>
+                                                    <action selector="didTapCrash:" destination="BYZ-38-t0r" eventType="touchUpInside" id="9D9-xw-5KU"/>
+                                                    <action selector="didTapSend10Logs:" destination="BYZ-38-t0r" eventType="touchUpInside" id="uu0-Ec-HaH"/>
                                                 </connections>
                                             </button>
                                         </subviews>

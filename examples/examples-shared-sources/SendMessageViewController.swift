@@ -51,6 +51,11 @@ class SendMessageViewController: UIViewController {
         }
     }
 
+    @IBAction func didTapCrash(_ sender: Any) {
+        // Access array out of its bounds
+        _ = [0, 1, 2, 3][10]
+    }
+
     private func repeat10x(block: () -> Void) {
         (0..<10).forEach { _ in block() }
     }
