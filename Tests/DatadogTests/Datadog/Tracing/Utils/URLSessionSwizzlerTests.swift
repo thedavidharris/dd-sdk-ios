@@ -63,13 +63,21 @@ class URLSessionSwizzlerTests_CustomDelegate: URLSessionSwizzlerTests {
     override var session: URLSession { _session }
 }
 
+extension MethodSwizzler {
+    func unswizzleIfSwizzled() {
+        if opaqueNewImplementation != nil {
+            swizzle(to: opaqueOriginalImplementation)
+        }
+    }
+}
+
 class URLSessionSwizzlerTests: XCTestCase {
     var session: URLSession { URLSession.shared }
     let modifiedURL = URL(string: "https://foo.bar.modified")!
 
     override func tearDown() {
         super.tearDown()
-        MethodSwizzler.shared.unsafe_unswizzleALL()
+        installedSwizzlers.forEach { $0.unswizzleIfSwizzled() }
         Swizzler.hasSwizzledBefore = false
     }
 
@@ -168,7 +176,7 @@ class ThirdPartySwizzlingTests: XCTestCase {
     var thirdPartySwizzler = ExchangingThirdPartySwizzler()
     override func tearDown() {
         super.tearDown()
-        MethodSwizzler.shared.unsafe_unswizzleALL()
+        installedSwizzlers.forEach { $0.unswizzleIfSwizzled() }
         thirdPartySwizzler.unswizzle()
     }
 

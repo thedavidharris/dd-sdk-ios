@@ -7,130 +7,78 @@
 import Foundation
 
 internal class MethodSwizzler {
-    struct FoundMethod: Hashable {
-        let method: Method
-        let klass: AnyClass
+    /// The `Method` controlled by this swizzler.
+    let method: Method
+    /// The original implementation of this `method`.
+    let opaqueOriginalImplementation: IMP
+    /// A new implementation of `method` installed by this swizzler.
+    private(set) var opaqueNewImplementation: IMP?
 
-        fileprivate init(method: Method, klass: AnyClass) {
-            self.method = method
-            self.klass = klass
-        }
-
-        static func == (lhs: MethodSwizzler.FoundMethod, rhs: MethodSwizzler.FoundMethod) -> Bool {
-            let methodParity = (lhs.method == rhs.method)
-            let classParity = (NSStringFromClass(lhs.klass) == NSStringFromClass(rhs.klass))
-            return methodParity && classParity
-        }
-
-        func hash(into hasher: inout Hasher) {
-            let methodName = NSStringFromSelector(method_getName(method))
-            let klassName = NSStringFromClass(klass)
-            let identifier = "\(methodName)|||\(klassName)"
-            hasher.combine(identifier)
-        }
-    }
-
-    static let shared = MethodSwizzler()
-    private init() { }
-    private var implementationCache = [FoundMethod: IMP]()
-
-    var swizzledCount: Int { return implementationCache.count }
-
-    func findMethodRecursively(with selector: Selector, in klass: AnyClass) -> FoundMethod? {
-        return sync {
-            var headKlass: AnyClass? = klass
-            while let someKlass = headKlass {
-                if let foundMethod = findMethod(with: selector, in: someKlass) {
-                    return FoundMethod(method: foundMethod, klass: someKlass)
-                }
-                headKlass = class_getSuperclass(headKlass)
-            }
+    static func `for`(selector: Selector, inClass `class`: AnyClass) -> MethodSwizzler? {
+        guard let method = findMethodRecursively(with: selector, in: `class`) else {
             return nil
         }
+        let swizzler = MethodSwizzler(method: method)
+        installedSwizzlers.append(swizzler)
+        return swizzler
     }
 
-    func currentImplementation<TypedIMP>(of found: FoundMethod) -> TypedIMP {
-        return sync {
-            return unsafeBitCast(method_getImplementation(found.method), to: TypedIMP.self)
-        }
+    private init(method: Method) {
+        self.method = method
+        self.opaqueOriginalImplementation = method_getImplementation(method)
     }
 
-    func originalImplementation<TypedIMP>(of found: FoundMethod) -> TypedIMP {
-        return sync {
-            let originalImp: IMP = implementationCache[found] ?? method_getImplementation(found.method)
-            return unsafeBitCast(originalImp, to: TypedIMP.self)
-        }
+    func originalImplementation<TypedIMP>() -> TypedIMP {
+        return unsafeBitCast(opaqueOriginalImplementation, to: TypedIMP.self)
     }
 
-    @discardableResult
-    func swizzleIfNonSwizzled(
-        foundMethod: FoundMethod,
-        with implementation: @autoclosure () -> IMP
-    ) -> Bool {
-        sync {
-            if implementationCache[foundMethod] != nil {
-                return false
-            }
-            set(newIMP: implementation(), for: foundMethod)
-            return true
-        }
+    func currentImplementation<TypedIMP>() -> TypedIMP {
+        return unsafeBitCast(method_getImplementation(method), to: TypedIMP.self)
     }
 
-    func set(newIMP: IMP, for found: FoundMethod) {
-        sync {
-            if implementationCache[found] == nil {
-                implementationCache[found] = method_getImplementation(found.method)
-            }
-            method_setImplementation(found.method, newIMP)
-        }
+    func swizzle(to newIMP: IMP) {
+        opaqueNewImplementation = newIMP
+        method_setImplementation(method, newIMP)
     }
 
-    // MARK: - Unsafe methods
-
-    @discardableResult
-    func unsafe_unswizzle(_ found: FoundMethod) -> Bool {
-        return sync {
-            guard let cachedImp = implementationCache[found] else {
-                return false
-            }
-            set(newIMP: cachedImp, for: found)
-            implementationCache[found] = nil
-            return true
+    func swizzleIfNotSwizzled(to newIMP: IMP) {
+        if opaqueNewImplementation != nil {
+            return
         }
+        swizzle(to: newIMP)
     }
+}
 
-    func unsafe_unswizzleALL() {
-        return sync {
-            let cachedMethods: [FoundMethod] = Array(implementationCache.keys)
-            for foundMethod in cachedMethods {
-                unsafe_unswizzle(foundMethod)
-            }
+/// A collection of all installed `MethodSwizzlers` to unswizzle them in unit tests.
+internal var installedSwizzlers: [MethodSwizzler] = []
+
+// MARK: - Reflection helpers
+
+private func findMethodRecursively(with selector: Selector, in klass: AnyClass) -> Method? {
+    var headKlass: AnyClass? = klass
+    while let someKlass = headKlass {
+        if let method = findMethod(with: selector, in: someKlass) {
+            return method
         }
+        headKlass = class_getSuperclass(headKlass)
     }
+    return nil
+}
 
-    // MARK: - Private methods
-
-    private func sync<T>(block: () -> T) -> T {
-        objc_sync_enter(self)
-        defer { objc_sync_exit(self) }
-        return block()
-    }
-
-    private func findMethod(with selector: Selector, in klass: AnyClass) -> Method? {
-        var methodsCount: UInt32 = 0
-        let methodsCountPtr = withUnsafeMutablePointer(to: &methodsCount) { $0 }
-        guard let methods: UnsafeMutablePointer<Method> = class_copyMethodList(klass, methodsCountPtr) else {
-            return nil
-        }
-        defer {
-            free(methods)
-        }
-        for index in 0..<Int(methodsCount) {
-            let method = methods.advanced(by: index).pointee
-            if method_getName(method) == selector {
-                return method
-            }
-        }
+private func findMethod(with selector: Selector, in klass: AnyClass) -> Method? {
+    var methodsCount: UInt32 = 0
+    let methodsCountPtr = withUnsafeMutablePointer(to: &methodsCount) { $0 }
+    guard let methods: UnsafeMutablePointer<Method> = class_copyMethodList(klass, methodsCountPtr) else {
         return nil
     }
+    defer {
+        free(methods)
+    }
+    for index in 0..<Int(methodsCount) {
+        let method = methods.advanced(by: index).pointee
+        if method_getName(method) == selector {
+            return method
+        }
+    }
+    return nil
 }
