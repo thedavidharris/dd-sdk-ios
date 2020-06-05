@@ -73,6 +73,8 @@ public typealias AttributeKey = String
 ///
 public typealias AttributeValue = Encodable
 
+public typealias DatadogLogger = Logger
+
 public class Logger {
     /// Writes `Log` objects to output.
     let logOutput: LogOutput
