@@ -15,6 +15,7 @@ let appConfig: AppConfig = currentAppConfig()
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
+    var task: URLSessionTask!
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
@@ -64,6 +65,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         #else
         logger.addTag(withKey: "build_configuration", value: "release")
         #endif
+
+        Datadog.enableURLSessionTracing()
+
+        task = URLSession.shared.dataTask(with: URL(string: "https://picsum.photos/200/300")!) { data, response, error in
+            _ = data
+        }
+        task.resume()
 
         return true
     }
