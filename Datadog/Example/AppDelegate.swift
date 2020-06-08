@@ -18,6 +18,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var task: URLSessionTask!
     var window: UIWindow?
 
+    var vcSwizzler = try! UIViewControllerSwizzler()
+
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
 
         if isRunningUnitTests() {

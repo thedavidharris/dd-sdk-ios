@@ -38,6 +38,7 @@ internal class MethodSwizzler<OriginalSignature, SwizzledSignature> {
     let originalImplementation: OriginalSignature
 
     // MARK: - Swizzled implementation
+
     func setNewImplementation(_ newImplementation: SwizzledSignature) {
         objc_sync_enter(runtimeLock)
         defer { objc_sync_exit(runtimeLock) }
