@@ -38,30 +38,11 @@ internal class MethodSwizzler<OriginalSignature, SwizzledSignature> {
     let originalImplementation: OriginalSignature
 
     // MARK: - Swizzled implementation
-
-    #if DD_SDK_DEVELOPMENT
-    private(set) var newImplementationPointer: IMP?
-    #endif
-
-    var newImplementation: SwizzledSignature {
-        objc_sync_enter(runtimeLock)
-        defer { objc_sync_exit(runtimeLock) }
-
-        #if DD_SDK_DEVELOPMENT
-        assert(newImplementationPointer == nil, "Trying to access the new implementation of \(source), but it was not swizzled.")
-        #endif
-        return unsafeBitCast(method_getImplementation(method), to: SwizzledSignature.self)
-    }
-
     func setNewImplementation(_ newImplementation: SwizzledSignature) {
         objc_sync_enter(runtimeLock)
         defer { objc_sync_exit(runtimeLock) }
 
         let newImplementationBlock = imp_implementationWithBlock(newImplementation)
-        #if DD_SDK_DEVELOPMENT
-        assert(newImplementationPointer == nil, "Trying swizzle the implementation of \(source), but it was already swizzled.")
-        newImplementationPointer = newImplementationBlock
-        #endif
         method_setImplementation(method, newImplementationBlock)
     }
 }
