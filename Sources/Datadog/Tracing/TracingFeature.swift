@@ -110,6 +110,10 @@ internal final class TracingFeature {
         }
     }
 
+    // MARK: - Autoinstrumentation
+
+    var urlSessionSwizzler: URLSessionSwizzler?
+
     // MARK: - Initialization
 
     init(

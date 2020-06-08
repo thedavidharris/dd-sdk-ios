@@ -7,7 +7,7 @@
 import OpenTracing
 
 public class DDHTTPHeadersWriter: HTTPHeadersWriter {
-    private struct Constants {
+    struct Constants {
         static let traceIDField = "x-datadog-trace-id"
         static let parentSpanIDField = "x-datadog-parent-id"
         // TODO: RUMM-338 support `x-datadog-sampling-priority`. `dd-trace-ot` reference:

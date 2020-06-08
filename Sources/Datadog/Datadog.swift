@@ -71,14 +71,15 @@ public class Datadog {
         instance?.userInfoProvider.value = UserInfo(id: id, name: name, email: email)
     }
 
-    // TODO: RUMM-452 Make up a good public API name
-    public static func enableURLSessionTracing() {
+    // TODO: RUMM-452 Make up a good public API and make it part of the `TracingFeature`
+    public static func enableURLSessionTracing(forBaseURLs baseURLs: [URL]) {
         do {
-            guard let datadog = Datadog.instance else {
+            guard let tracingFeature = TracingFeature.instance else {
                 consolePrint("🔥 `Datadog.initialize()` must be called prior to `Datadog.enableURLSessionTracing()`")
                 return
             }
-            datadog.urlSessionSwizzler = try URLSessionSwizzler(interceptor: DebugURLSessionInterceptor())
+            let tracingInterceptor = URLSessionTracingInterceptor(tracingFeature: tracingFeature, acceptedURLs: baseURLs)
+            tracingFeature.urlSessionSwizzler = try URLSessionSwizzler(interceptor: tracingInterceptor)
         } catch {
             consolePrint("🔥 Failed to enable URLSession tracing: \(error)")
         }
@@ -89,7 +90,6 @@ public class Datadog {
     internal static var instance: Datadog?
 
     internal let userInfoProvider: UserInfoProvider
-    internal var urlSessionSwizzler: URLSessionSwizzler?
 
     private static func initializeOrThrow(appContext: AppContext, configuration: Configuration) throws {
         guard Datadog.instance == nil else {

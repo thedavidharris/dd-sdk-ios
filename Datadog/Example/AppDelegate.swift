@@ -66,7 +66,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         logger.addTag(withKey: "build_configuration", value: "release")
         #endif
 
-        Datadog.enableURLSessionTracing()
+        Datadog.enableURLSessionTracing(
+            forBaseURLs: [
+                URL(string: "https://picsum.photos/")!
+            ]
+        )
 
         task = URLSession.shared.dataTask(with: URL(string: "https://picsum.photos/200/300")!) { data, response, error in
             _ = data
