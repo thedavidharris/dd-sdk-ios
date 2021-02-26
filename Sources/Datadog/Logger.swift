@@ -15,6 +15,30 @@ public enum LogLevel: Int, Codable {
     case warn
     case error
     case critical
+
+    // MARK: - `LogLevel` <> `Log.Status` conversion
+
+    internal var asLogStatus: Log.Status {
+        switch self {
+        case .debug:    return .debug
+        case .info:     return .info
+        case .notice:   return .notice
+        case .warn:     return .warn
+        case .error:    return .error
+        case .critical: return .critical
+        }
+    }
+
+    internal init(from logStatus: Log.Status) {
+        switch logStatus {
+        case .debug:    self = .debug
+        case .info:     self = .info
+        case .notice:   self = .notice
+        case .warn:     self = .warn
+        case .error:    self = .error
+        case .critical: self = .critical
+        }
+    }
 }
 
 /// Because `Logger` is a common name widely used across different projects, the `Datadog.Logger` may conflict when
@@ -33,8 +57,10 @@ public enum LogLevel: Int, Codable {
 public typealias DDLogger = Logger
 
 public class Logger {
-    /// Writes `Log` objects to output.
-    let logOutput: LogOutput
+    /// Builds the `Log` from user input; `nil` for no-op logger.
+    internal let logBuilder: LogBuilder?
+    /// Writes the `Log` to file; `nil` for no-op logger.
+    internal let logOutput: LogOutput?
     /// Provides date for log creation.
     private let dateProvider: DateProvider
     /// Attributes associated with every log.
@@ -51,12 +77,14 @@ public class Logger {
     internal let environmentSpanIntegration = LoggingWithEnvironmentSpanIntegration()
 
     init(
-        logOutput: LogOutput,
+        logBuilder: LogBuilder?,
+        logOutput: LogOutput?,
         dateProvider: DateProvider,
         identifier: String,
         rumContextIntegration: LoggingWithRUMContextIntegration?,
         activeSpanIntegration: LoggingWithActiveSpanIntegration?
     ) {
+        self.logBuilder = logBuilder
         self.logOutput = logOutput
         self.dateProvider = dateProvider
         self.queue = DispatchQueue(
@@ -217,7 +245,9 @@ public class Logger {
     // MARK: - Private
 
     private func log(level: LogLevel, message: String, error: Error?, messageAttributes: [String: Encodable]?) {
-        let date = dateProvider.currentDate()
+        guard let logBuilder = logBuilder, let logOutput = logOutput else {
+            return // ignore, as the `Logger` is no-op
+        }
 
         var combinedUserAttributes = messageAttributes ?? [:]
         combinedUserAttributes = queue.sync {
@@ -240,17 +270,19 @@ public class Logger {
             return self.loggerTags
         }
 
-        logOutput.writeLogWith(
+        let log = logBuilder.createLogWith(
             level: level,
             message: message,
             error: error.flatMap { DDError(error: $0) },
-            date: date,
+            date: dateProvider.currentDate(),
             attributes: LogAttributes(
                 userAttributes: combinedUserAttributes,
                 internalAttributes: combinedInternalAttributes
             ),
             tags: tags
         )
+
+        logOutput.write(log: log)
     }
 
     // MARK: - Logger.Builder
@@ -357,7 +389,8 @@ public class Logger {
             } catch {
                 consolePrint("\(error)")
                 return Logger(
-                    logOutput: NoOpLogOutput(),
+                    logBuilder: nil,
+                    logOutput: nil,
                     dateProvider: SystemDateProvider(),
                     identifier: "no-op",
                     rumContextIntegration: nil,
@@ -375,16 +408,6 @@ public class Logger {
                 )
             }
 
-            return Logger(
-                logOutput: resolveLogsOutput(for: loggingFeature),
-                dateProvider: loggingFeature.dateProvider,
-                identifier: resolveLoggerName(for: loggingFeature),
-                rumContextIntegration: (RUMFeature.isEnabled && bundleWithRUM) ? LoggingWithRUMContextIntegration() : nil,
-                activeSpanIntegration: (TracingFeature.isEnabled && bundleWithTrace) ? LoggingWithActiveSpanIntegration() : nil
-            )
-        }
-
-        private func resolveLogsOutput(for loggingFeature: LoggingFeature) -> LogOutput {
             let logBuilder = LogBuilder(
                 applicationVersion: loggingFeature.configuration.common.applicationVersion,
                 environment: loggingFeature.configuration.common.environment,
@@ -396,17 +419,26 @@ public class Logger {
                 dateCorrector: loggingFeature.dateCorrector
             )
 
+            return Logger(
+                logBuilder: logBuilder,
+                logOutput: resolveLogsOutput(for: loggingFeature),
+                dateProvider: loggingFeature.dateProvider,
+                identifier: resolveLoggerName(for: loggingFeature),
+                rumContextIntegration: (RUMFeature.isEnabled && bundleWithRUM) ? LoggingWithRUMContextIntegration() : nil,
+                activeSpanIntegration: (TracingFeature.isEnabled && bundleWithTrace) ? LoggingWithActiveSpanIntegration() : nil
+            )
+        }
+
+        private func resolveLogsOutput(for loggingFeature: LoggingFeature) -> LogOutput {
             switch (useFileOutput, useConsoleLogFormat) {
             case (true, let format?):
                 return CombinedLogOutput(
                     combine: [
                         LogFileOutput(
-                            logBuilder: logBuilder,
                             fileWriter: loggingFeature.storage.writer,
                             rumErrorsIntegration: LoggingWithRUMErrorsIntegration()
                         ),
                         LogConsoleOutput(
-                            logBuilder: logBuilder,
                             format: format,
                             timeZone: .current
                         )
@@ -414,13 +446,11 @@ public class Logger {
                 )
             case (true, nil):
                 return LogFileOutput(
-                    logBuilder: logBuilder,
                     fileWriter: loggingFeature.storage.writer,
                     rumErrorsIntegration: LoggingWithRUMErrorsIntegration()
                 )
             case (false, let format?):
                 return LogConsoleOutput(
-                    logBuilder: logBuilder,
                     format: format,
                     timeZone: .current
                 )
