@@ -6,12 +6,6 @@
 
 import Foundation
 
-/// `LogOutput` which does nothing.
-internal struct NoOpLogOutput: LogOutput {
-    func write(log: Log) {}
-}
-
-/// Combines one or more `LogOutputs` into one.
 internal struct CombinedLogOutput: LogOutput {
     let combinedOutputs: [LogOutput]
 

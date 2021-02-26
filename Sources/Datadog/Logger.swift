@@ -408,6 +408,19 @@ public class Logger {
                 )
             }
 
+            let (logBuilder, logOutput) = resolveLogBuilderAndOutput(for: loggingFeature) ?? (nil, nil)
+
+            return Logger(
+                logBuilder: logBuilder,
+                logOutput: logOutput,
+                dateProvider: loggingFeature.dateProvider,
+                identifier: resolveLoggerName(for: loggingFeature),
+                rumContextIntegration: (RUMFeature.isEnabled && bundleWithRUM) ? LoggingWithRUMContextIntegration() : nil,
+                activeSpanIntegration: (TracingFeature.isEnabled && bundleWithTrace) ? LoggingWithActiveSpanIntegration() : nil
+            )
+        }
+
+        private func resolveLogBuilderAndOutput(for loggingFeature: LoggingFeature) -> (LogBuilder, LogOutput)? {
             let logBuilder = LogBuilder(
                 applicationVersion: loggingFeature.configuration.common.applicationVersion,
                 environment: loggingFeature.configuration.common.environment,
@@ -419,20 +432,9 @@ public class Logger {
                 dateCorrector: loggingFeature.dateCorrector
             )
 
-            return Logger(
-                logBuilder: logBuilder,
-                logOutput: resolveLogsOutput(for: loggingFeature),
-                dateProvider: loggingFeature.dateProvider,
-                identifier: resolveLoggerName(for: loggingFeature),
-                rumContextIntegration: (RUMFeature.isEnabled && bundleWithRUM) ? LoggingWithRUMContextIntegration() : nil,
-                activeSpanIntegration: (TracingFeature.isEnabled && bundleWithTrace) ? LoggingWithActiveSpanIntegration() : nil
-            )
-        }
-
-        private func resolveLogsOutput(for loggingFeature: LoggingFeature) -> LogOutput {
             switch (useFileOutput, useConsoleLogFormat) {
             case (true, let format?):
-                return CombinedLogOutput(
+                let logOutput = CombinedLogOutput(
                     combine: [
                         LogFileOutput(
                             fileWriter: loggingFeature.storage.writer,
@@ -444,18 +446,21 @@ public class Logger {
                         )
                     ]
                 )
+                return (logBuilder, logOutput)
             case (true, nil):
-                return LogFileOutput(
+                let logOutput = LogFileOutput(
                     fileWriter: loggingFeature.storage.writer,
                     rumErrorsIntegration: LoggingWithRUMErrorsIntegration()
                 )
+                return (logBuilder, logOutput)
             case (false, let format?):
-                return LogConsoleOutput(
+                let logOutput = LogConsoleOutput(
                     format: format,
                     timeZone: .current
                 )
+                return (logBuilder, logOutput)
             case (false, nil):
-                return NoOpLogOutput()
+                return nil
             }
         }
 
